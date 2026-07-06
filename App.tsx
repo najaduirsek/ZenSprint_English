@@ -151,11 +151,33 @@ export default function App() {
 
   const handlePlayAudio = () => {
     if (isPlaying) return;
-    setIsPlaying(true);
-    // Mock audio duration
-    setTimeout(() => {
-      setIsPlaying(false);
-    }, 2500);
+    
+    if ('speechSynthesis' in window) {
+      setIsPlaying(true);
+      const textToSpeak = getFullTargetFormula(currentData.formula, currentData.variables);
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9; // Slightly slower for better comprehension
+
+      utterance.onend = () => {
+        setIsPlaying(false);
+      };
+
+      utterance.onerror = (e) => {
+        console.error("Speech synthesis error", e);
+        setIsPlaying(false);
+      };
+
+      window.speechSynthesis.cancel(); // Clear any ongoing speech
+      window.speechSynthesis.speak(utterance);
+    } else {
+      // Fallback if not supported
+      setIsPlaying(true);
+      setTimeout(() => {
+        setIsPlaying(false);
+      }, 2500);
+    }
   };
 
   const handleToggleRecord = () => {
